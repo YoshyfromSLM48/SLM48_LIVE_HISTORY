@@ -1245,7 +1245,8 @@ function buildSongMap() {
   const map = {};
   DB.forEach(live => {
     live.setlist.forEach(s => {
-      const key = `${s.artist}|||${s.title}`;
+      // 大文字小文字を無視して同一曲として集計（表示は初出の表記を使用）
+      const key = `${s.artist.toLowerCase()}|||${s.title.toLowerCase()}`;
       if (!map[key]) map[key] = { artist: s.artist, title: s.title, dates: [] };
       map[key].dates.push(live.date);
     });
@@ -1258,8 +1259,10 @@ function buildBandMap() {
   const map = {};
   DB.forEach(live => {
     live.bands.forEach(b => {
-      if (!map[b]) map[b] = { name: b, dates: [] };
-      map[b].dates.push(live.date);
+      // 大文字小文字を無視して同一バンドとして集計（表示は初出の表記を使用）
+      const key = b.toLowerCase();
+      if (!map[key]) map[key] = { name: b, dates: [] };
+      map[key].dates.push(live.date);
     });
   });
   return Object.values(map);
@@ -1273,9 +1276,16 @@ function initFilters() {
   const yf = document.getElementById('yearFilter');
   allYears.forEach(y => { const o = document.createElement('option'); o.value = y; o.textContent = y + '年'; yf.appendChild(o); });
 
+  // アーティスト一覧：大文字小文字を無視して重複除去（表示は初出の表記を使用）
   const af = document.getElementById('songArtistFilter');
-  const artists = [...new Set(DB.flatMap(l => l.setlist.map(s => s.artist)))].sort();
-  artists.forEach(a => { const o = document.createElement('option'); o.value = a; o.textContent = a; af.appendChild(o); });
+  const artistMap = {};
+  DB.flatMap(l => l.setlist.map(s => s.artist)).forEach(a => {
+    const k = a.toLowerCase();
+    if (!artistMap[k]) artistMap[k] = a;
+  });
+  Object.values(artistMap).sort((a,b) => a.localeCompare(b, 'ja')).forEach(a => {
+    const o = document.createElement('option'); o.value = a; o.textContent = a; af.appendChild(o);
+  });
 
   // venue×setlist select
   const vsf = document.getElementById('venueSongSelect');
@@ -1284,16 +1294,22 @@ function initFilters() {
     const o = document.createElement('option'); o.value = v; o.textContent = `${v}（${liveCount}回）`; vsf.appendChild(o);
   });
 
-  // band×setlist select
+  // band×setlist select：大文字小文字を無視して重複除去（表示は初出の表記を使用）
   const bsf = document.getElementById('bandSongSelect');
-  const allBands = [...new Set(DB.flatMap(l => l.bands))].sort((a,b) => {
-    const ca = DB.filter(l => l.bands.includes(a)).length;
-    const cb = DB.filter(l => l.bands.includes(b)).length;
-    return cb - ca;
+  const bandMap = {};
+  DB.flatMap(l => l.bands).forEach(b => {
+    const k = b.toLowerCase();
+    if (!bandMap[k]) bandMap[k] = { name: b, count: 0 };
+    bandMap[k].count += DB.filter(l => l.bands.some(x => x.toLowerCase() === k)).length > bandMap[k].count
+      ? 0 : 1;
   });
-  allBands.forEach(b => {
-    const coCount = DB.filter(l => l.bands.includes(b)).length;
-    const o = document.createElement('option'); o.value = b; o.textContent = `${b}（${coCount}回共演）`; bsf.appendChild(o);
+  // 共演回数を正しく集計
+  Object.values(bandMap).forEach(entry => {
+    const k = entry.name.toLowerCase();
+    entry.count = DB.filter(l => l.bands.some(x => x.toLowerCase() === k)).length;
+  });
+  Object.values(bandMap).sort((a,b) => b.count - a.count).forEach(entry => {
+    const o = document.createElement('option'); o.value = entry.name; o.textContent = `${entry.name}（${entry.count}回共演）`; bsf.appendChild(o);
   });
 }
 
@@ -1416,7 +1432,7 @@ function renderSongs() {
   const sort = document.getElementById('songSortFilter').value;
 
   let songs = buildSongMap().filter(s => {
-    if (artistF && s.artist !== artistF) return false;
+    if (artistF && s.artist.toLowerCase() !== artistF.toLowerCase()) return false;
     if (!q) return true;
     return (s.artist + s.title).toLowerCase().includes(q);
   });
@@ -1513,7 +1529,8 @@ function buildSongMapFromLives(lives) {
   const map = {};
   lives.forEach(live => {
     live.setlist.forEach(s => {
-      const key = `${s.artist}|||${s.title}`;
+      // 大文字小文字を無視して同一曲として集計（表示は初出の表記を使用）
+      const key = `${s.artist.toLowerCase()}|||${s.title.toLowerCase()}`;
       if (!map[key]) map[key] = { artist: s.artist, title: s.title, dates: [], liveIds: [] };
       if (!map[key].dates.includes(live.date)) {
         map[key].dates.push(live.date);
@@ -1603,7 +1620,7 @@ function renderBandSongs() {
     listEl.innerHTML = '<div class="empty"><div class="emoji">🤝</div>上のプルダウンから共演バンドを選択してください</div>';
     return;
   }
-  const lives = DB.filter(l => l.bands.includes(band));
+  const lives = DB.filter(l => l.bands.some(b => b.toLowerCase() === band.toLowerCase()));
   const songs = buildSongMapFromLives(lives);
 
   const summaryHtml = `
