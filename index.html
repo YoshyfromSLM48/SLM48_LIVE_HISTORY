@@ -300,16 +300,115 @@
   .song-list-item {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: 4px 4px 0 0;
     padding: 12px 18px;
-    margin-bottom: 10px;
+    margin-bottom: 0;
     display: flex;
     align-items: center;
     gap: 14px;
     transition: border-color 0.2s;
     cursor: pointer;
+    user-select: none;
   }
   .song-list-item:hover { border-color: var(--accent2); }
+  .song-list-item.open { border-color: var(--accent2); border-bottom: none; border-radius: 4px 4px 0 0; }
+
+  /* Song detail expansion panel */
+  .song-detail-panel {
+    display: none;
+    background: #141414;
+    border: 1px solid var(--accent2);
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .song-detail-panel.open { display: block; }
+  .song-detail-header {
+    background: #1e1800;
+    padding: 10px 18px;
+    font-size: 0.75rem;
+    color: var(--accent2);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .song-live-block {
+    border-bottom: 1px solid var(--border);
+  }
+  .song-live-block:last-child { border-bottom: none; }
+  .song-live-meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 18px 8px;
+    background: var(--surface2);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .song-live-meta:hover { background: #2a2a2a; }
+  .song-live-date-box {
+    background: var(--accent);
+    color: #fff;
+    border-radius: 3px;
+    padding: 4px 8px;
+    text-align: center;
+    min-width: 60px;
+    flex-shrink: 0;
+  }
+  .song-live-date-box .yr { font-size: 0.65rem; opacity: 0.85; font-weight: 600; }
+  .song-live-date-box .md { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; line-height: 1.1; }
+  .song-live-title { font-size: 0.88rem; font-weight: 600; flex: 1; }
+  .song-live-venue { font-size: 0.75rem; color: #b090f0; }
+  .song-position-badge {
+    background: var(--accent);
+    color: #fff;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.9rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    flex-shrink: 0;
+  }
+  .song-live-setlist {
+    padding: 0 18px 10px 18px;
+  }
+  .song-live-setlist ul {
+    list-style: none;
+    counter-reset: sl;
+    margin: 0;
+    padding: 0;
+  }
+  .song-live-setlist li {
+    counter-increment: sl;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 4px 0;
+    border-bottom: 1px solid #222;
+    font-size: 0.85rem;
+  }
+  .song-live-setlist li:last-child { border-bottom: none; }
+  .song-live-setlist li::before {
+    content: counter(sl, decimal-leading-zero);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    min-width: 20px;
+  }
+  .song-live-setlist li.highlight-row {
+    background: #2a1e00;
+    border-radius: 3px;
+    padding: 5px 6px;
+    margin: 2px -6px;
+  }
+  .song-live-setlist li.highlight-row .sl-artist { color: var(--accent2); font-weight: 700; }
+  .song-live-setlist li.highlight-row .sl-title  { color: #fff; font-weight: 700; }
+  .sl-artist { color: var(--accent2); font-size: 0.78rem; flex-shrink: 0; }
+  .sl-title  { color: var(--text); }
+  .song-wrap { margin-bottom: 12px; }
   .song-num {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 1.5rem;
@@ -1135,7 +1234,7 @@ const DB = [
       { artist: "SMAP", title: "SHAKE" },
       { artist: "氣志團", title: "One Night Carnival" },
     ],
-    bands: ["サンザンオールスターズ","Crazy Shuffle"]
+    bands: []
   },
   {
     date: "2026-01-25",
@@ -1245,8 +1344,7 @@ function buildSongMap() {
   const map = {};
   DB.forEach(live => {
     live.setlist.forEach(s => {
-      // 大文字小文字を無視して同一曲として集計（表示は初出の表記を使用）
-      const key = `${s.artist.toLowerCase()}|||${s.title.toLowerCase()}`;
+      const key = `${s.artist}|||${s.title}`;
       if (!map[key]) map[key] = { artist: s.artist, title: s.title, dates: [] };
       map[key].dates.push(live.date);
     });
@@ -1259,10 +1357,8 @@ function buildBandMap() {
   const map = {};
   DB.forEach(live => {
     live.bands.forEach(b => {
-      // 大文字小文字を無視して同一バンドとして集計（表示は初出の表記を使用）
-      const key = b.toLowerCase();
-      if (!map[key]) map[key] = { name: b, dates: [] };
-      map[key].dates.push(live.date);
+      if (!map[b]) map[b] = { name: b, dates: [] };
+      map[b].dates.push(live.date);
     });
   });
   return Object.values(map);
@@ -1276,16 +1372,9 @@ function initFilters() {
   const yf = document.getElementById('yearFilter');
   allYears.forEach(y => { const o = document.createElement('option'); o.value = y; o.textContent = y + '年'; yf.appendChild(o); });
 
-  // アーティスト一覧：大文字小文字を無視して重複除去（表示は初出の表記を使用）
   const af = document.getElementById('songArtistFilter');
-  const artistMap = {};
-  DB.flatMap(l => l.setlist.map(s => s.artist)).forEach(a => {
-    const k = a.toLowerCase();
-    if (!artistMap[k]) artistMap[k] = a;
-  });
-  Object.values(artistMap).sort((a,b) => a.localeCompare(b, 'ja')).forEach(a => {
-    const o = document.createElement('option'); o.value = a; o.textContent = a; af.appendChild(o);
-  });
+  const artists = [...new Set(DB.flatMap(l => l.setlist.map(s => s.artist)))].sort();
+  artists.forEach(a => { const o = document.createElement('option'); o.value = a; o.textContent = a; af.appendChild(o); });
 
   // venue×setlist select
   const vsf = document.getElementById('venueSongSelect');
@@ -1294,22 +1383,16 @@ function initFilters() {
     const o = document.createElement('option'); o.value = v; o.textContent = `${v}（${liveCount}回）`; vsf.appendChild(o);
   });
 
-  // band×setlist select：大文字小文字を無視して重複除去（表示は初出の表記を使用）
+  // band×setlist select
   const bsf = document.getElementById('bandSongSelect');
-  const bandMap = {};
-  DB.flatMap(l => l.bands).forEach(b => {
-    const k = b.toLowerCase();
-    if (!bandMap[k]) bandMap[k] = { name: b, count: 0 };
-    bandMap[k].count += DB.filter(l => l.bands.some(x => x.toLowerCase() === k)).length > bandMap[k].count
-      ? 0 : 1;
+  const allBands = [...new Set(DB.flatMap(l => l.bands))].sort((a,b) => {
+    const ca = DB.filter(l => l.bands.includes(a)).length;
+    const cb = DB.filter(l => l.bands.includes(b)).length;
+    return cb - ca;
   });
-  // 共演回数を正しく集計
-  Object.values(bandMap).forEach(entry => {
-    const k = entry.name.toLowerCase();
-    entry.count = DB.filter(l => l.bands.some(x => x.toLowerCase() === k)).length;
-  });
-  Object.values(bandMap).sort((a,b) => b.count - a.count).forEach(entry => {
-    const o = document.createElement('option'); o.value = entry.name; o.textContent = `${entry.name}（${entry.count}回共演）`; bsf.appendChild(o);
+  allBands.forEach(b => {
+    const coCount = DB.filter(l => l.bands.includes(b)).length;
+    const o = document.createElement('option'); o.value = b; o.textContent = `${b}（${coCount}回共演）`; bsf.appendChild(o);
   });
 }
 
@@ -1427,9 +1510,9 @@ function switchTabDirect(name) {
 
 // Render songs
 function renderSongs() {
-  const q = document.getElementById('songSearch').value.trim().toLowerCase();
+  const q       = document.getElementById('songSearch').value.trim().toLowerCase();
   const artistF = document.getElementById('songArtistFilter').value;
-  const sort = document.getElementById('songSortFilter').value;
+  const sort    = document.getElementById('songSortFilter').value;
 
   let songs = buildSongMap().filter(s => {
     if (artistF && s.artist.toLowerCase() !== artistF.toLowerCase()) return false;
@@ -1443,24 +1526,66 @@ function renderSongs() {
 
   document.getElementById('songCount').innerHTML = `<span>${songs.length}</span> 曲`;
 
-  if (!songs.length) { document.getElementById('songList').innerHTML = '<div class="empty"><div class="emoji">🎵</div>該当する曲がありません</div>'; return; }
+  if (!songs.length) {
+    document.getElementById('songList').innerHTML = '<div class="empty"><div class="emoji">🎵</div>該当する曲がありません</div>';
+    return;
+  }
 
   document.getElementById('songList').innerHTML = songs.map((s, i) => {
     const latestDate = formatDate(s.dates[s.dates.length-1]).full;
-    const firstDate = formatDate(s.dates[0]).full;
-    return `
-      <div class="song-list-item" onclick="searchByDate('${s.dates[0]}')">
-        <div class="song-num">${String(i+1).padStart(2,'0')}</div>
-        <div class="song-info">
-          <div class="artist">${hl(s.artist,q)}</div>
-          <div class="title">${hl(s.title,q)}</div>
-          <div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px">初演: ${firstDate}　最新: ${latestDate}</div>
-        </div>
-        <div class="song-dates">
-          <span class="count">${s.dates.length}</span>
-          回演奏
-        </div>
-      </div>`;
+    const firstDate  = formatDate(s.dates[0]).full;
+    const sid = 'song_' + i;
+
+    const livePanels = s.dates.map(date => {
+      const live = DB.find(l => l.date === date);
+      if (!live) return '';
+      const fd = formatDate(date);
+      const pos = live.setlist.findIndex(
+        x => x.artist.toLowerCase() === s.artist.toLowerCase() &&
+             x.title.toLowerCase()  === s.title.toLowerCase()
+      );
+      const posLabel = pos >= 0 ? (pos + 1) + '曲目' : '';
+      const setlistRows = live.setlist.map((x) => {
+        const isTarget = x.artist.toLowerCase() === s.artist.toLowerCase() &&
+                         x.title.toLowerCase()  === s.title.toLowerCase();
+        return '<li class="' + (isTarget ? 'highlight-row' : '') + '">'
+          + '<span class="sl-artist">' + x.artist + '</span>'
+          + '<span class="sl-title">' + x.title + '</span>'
+          + '</li>';
+      }).join('');
+      return '<div class="song-live-block">'
+        + '<div class="song-live-meta" onclick="toggleSongLive(this)">'
+        + '<div class="song-live-date-box">'
+        + '<div class="yr">' + fd.year + '</div>'
+        + '<div class="md">' + fd.md + '</div>'
+        + '</div>'
+        + '<div style="flex:1">'
+        + '<div class="song-live-title">' + live.title + '</div>'
+        + '<div class="song-live-venue">📍 ' + live.venue + '</div>'
+        + '</div>'
+        + (posLabel ? '<span class="song-position-badge">' + posLabel + '</span>' : '')
+        + '<span class="sl-expand-icon" style="color:var(--text-dim);font-size:0.85rem;transition:transform 0.2s">▼</span>'
+        + '</div>'
+        + '<div class="song-live-setlist" style="display:none"><ul>' + setlistRows + '</ul></div>'
+        + '</div>';
+    }).join('');
+
+    return '<div class="song-wrap">'
+      + '<div class="song-list-item" id="' + sid + '" onclick="toggleSongDetail(\'' + sid + '\')">'
+      + '<div class="song-num">' + String(i+1).padStart(2,'0') + '</div>'
+      + '<div class="song-info">'
+      + '<div class="artist">' + hl(s.artist,q) + '</div>'
+      + '<div class="title">' + hl(s.title,q) + '</div>'
+      + '<div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px">初演: ' + firstDate + '　最新: ' + latestDate + '</div>'
+      + '</div>'
+      + '<div class="song-dates"><span class="count">' + s.dates.length + '</span>回演奏</div>'
+      + '<span class="song-expand-icon" style="color:var(--text-dim);font-size:0.85rem;margin-left:8px;transition:transform 0.2s;flex-shrink:0">▼</span>'
+      + '</div>'
+      + '<div class="song-detail-panel" id="' + sid + '_panel">'
+      + '<div class="song-detail-header">🎵 「' + s.title + '」を演奏した全ライブ（' + s.dates.length + '回）</div>'
+      + livePanels
+      + '</div>'
+      + '</div>';
   }).join('');
 }
 
@@ -1472,6 +1597,50 @@ function searchByDate(date) {
   renderLives();
   const card = document.getElementById('card_' + date.replace(/-/g,''));
   if (card) { card.classList.add('open'); setTimeout(()=>card.scrollIntoView({behavior:'smooth',block:'start'}),100); }
+}
+
+// 曲検索：曲カードの展開／折りたたみ
+function toggleSongDetail(sid) {
+  const item  = document.getElementById(sid);
+  const panel = document.getElementById(sid + '_panel');
+  const icon  = item.querySelector('.song-expand-icon');
+  const isOpen = panel.classList.contains('open');
+  if (isOpen) {
+    panel.classList.remove('open');
+    item.classList.remove('open');
+    if (icon) icon.style.transform = '';
+  } else {
+    panel.classList.add('open');
+    item.classList.add('open');
+    if (icon) icon.style.transform = 'rotate(180deg)';
+    // 最初のライブを自動展開
+    const firstBlock = panel.querySelector('.song-live-block');
+    if (firstBlock) openSongLiveBlock(firstBlock);
+  }
+}
+
+// 曲検索：ライブ行のセットリスト展開／折りたたみ
+function toggleSongLive(metaEl) {
+  const block    = metaEl.parentElement;
+  const setlist  = block.querySelector('.song-live-setlist');
+  const icon     = metaEl.querySelector('.sl-expand-icon');
+  const isOpen   = setlist.style.display !== 'none';
+  if (isOpen) {
+    setlist.style.display = 'none';
+    if (icon) icon.style.transform = '';
+  } else {
+    openSongLiveBlock(block);
+  }
+}
+
+function openSongLiveBlock(block) {
+  const setlist = block.querySelector('.song-live-setlist');
+  const icon    = block.querySelector('.sl-expand-icon');
+  setlist.style.display = 'block';
+  if (icon) icon.style.transform = 'rotate(180deg)';
+  // ハイライト行までスクロール
+  const hl = setlist.querySelector('.highlight-row');
+  if (hl) setTimeout(() => hl.scrollIntoView({behavior:'smooth', block:'nearest'}), 150);
 }
 
 // Render bands
@@ -1529,8 +1698,7 @@ function buildSongMapFromLives(lives) {
   const map = {};
   lives.forEach(live => {
     live.setlist.forEach(s => {
-      // 大文字小文字を無視して同一曲として集計（表示は初出の表記を使用）
-      const key = `${s.artist.toLowerCase()}|||${s.title.toLowerCase()}`;
+      const key = `${s.artist}|||${s.title}`;
       if (!map[key]) map[key] = { artist: s.artist, title: s.title, dates: [], liveIds: [] };
       if (!map[key].dates.includes(live.date)) {
         map[key].dates.push(live.date);
@@ -1620,7 +1788,7 @@ function renderBandSongs() {
     listEl.innerHTML = '<div class="empty"><div class="emoji">🤝</div>上のプルダウンから共演バンドを選択してください</div>';
     return;
   }
-  const lives = DB.filter(l => l.bands.some(b => b.toLowerCase() === band.toLowerCase()));
+  const lives = DB.filter(l => l.bands.includes(band));
   const songs = buildSongMapFromLives(lives);
 
   const summaryHtml = `
