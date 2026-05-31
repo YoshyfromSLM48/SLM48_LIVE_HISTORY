@@ -435,6 +435,8 @@
     <button class="tab-btn active" onclick="switchTab('lives')">🎸 ライブ一覧</button>
     <button class="tab-btn" onclick="switchTab('songs')">🎵 曲検索</button>
     <button class="tab-btn" onclick="switchTab('bands')">🎤 共演バンド</button>
+    <button class="tab-btn" onclick="switchTab('venuesongs')">📍 会場×セトリ</button>
+    <button class="tab-btn" onclick="switchTab('bandsongs')">🤝 共演×セトリ</button>
     <button class="tab-btn" onclick="switchTab('maintenance')">🔧 メンテナンス</button>
   </div>
 
@@ -477,6 +479,40 @@
     </div>
     <div class="result-count" id="bandCount"></div>
     <div id="bandList"></div>
+  </div>
+
+  <!-- Tab: Venue × Setlist -->
+  <div class="tab-panel" id="tab-venuesongs">
+    <div class="search-bar">
+      <select id="venueSongSelect" onchange="renderVenueSongs()">
+        <option value="">会場を選んでください</option>
+      </select>
+      <input type="text" id="venueSongSearch" placeholder="曲名・アーティスト名で絞り込み..." oninput="renderVenueSongs()" style="flex:1;min-width:200px">
+      <select id="venueSongSort" onchange="renderVenueSongs()">
+        <option value="count">演奏回数順</option>
+        <option value="alpha">曲名順</option>
+        <option value="artist">アーティスト順</option>
+      </select>
+    </div>
+    <div class="result-count" id="venueSongCount"></div>
+    <div id="venueSongList"></div>
+  </div>
+
+  <!-- Tab: Band × Setlist -->
+  <div class="tab-panel" id="tab-bandsongs">
+    <div class="search-bar">
+      <select id="bandSongSelect" onchange="renderBandSongs()">
+        <option value="">共演バンドを選んでください</option>
+      </select>
+      <input type="text" id="bandSongSearch" placeholder="曲名・アーティスト名で絞り込み..." oninput="renderBandSongs()" style="flex:1;min-width:200px">
+      <select id="bandSongSort" onchange="renderBandSongs()">
+        <option value="count">演奏回数順</option>
+        <option value="alpha">曲名順</option>
+        <option value="artist">アーティスト順</option>
+      </select>
+    </div>
+    <div class="result-count" id="bandSongCount"></div>
+    <div id="bandSongList"></div>
   </div>
 
   <!-- Tab: Maintenance -->
@@ -526,15 +562,15 @@
 const DB = [
   {
     date: "2018-05-12",
-    title: "岡崎BOPPERSライブ",
+    title: "BBB LIVE VOL.193 岡崎BOPPERS",
     venue: "BOPPERS",
     setlist: [
       { artist: "BOOWY", title: "B BLUE" },
-      { artist: "BOOWY", title: "ONLY YOU" },
+      { artist: "BOOWY", title: "Only You" },
       { artist: "THE BLUE HEARTS", title: "リンダリンダ" },
       { artist: "THE BLUE HEARTS", title: "Train Train" },
     ],
-    bands: []
+    bands: ["melancholic toma's", "the mottles", "waffle"]
   },
   {
     date: "2018-06-10",
@@ -549,22 +585,22 @@ const DB = [
   },
   {
     date: "2018-09-15",
-    title: "岡崎BOPPERSライブ",
+    title: "BBB LIVE VOL.203 岡崎BOPPERS",
     venue: "BOPPERS",
     setlist: [
       { artist: "BOOWY", title: "B BLUE" },
       { artist: "ZIGGY", title: "GLORIA" },
       { artist: "BOOWY", title: "マリオネット" },
-      { artist: "BOOWY", title: "CLOUDY HEART" },
-      { artist: "BOOWY", title: "ONLY YOU" },
+      { artist: "BOOWY", title: "Cloudy Heart" },
+      { artist: "BOOWY", title: "Only You" },
       { artist: "BOOWY", title: "NO NEWYORK" },
       { artist: "THE BLUE HEARTS", title: "リンダリンダ" },
     ],
-    bands: []
+    bands: ["SOAK", "銀行強盗'S"]
   },
   {
     date: "2018-12-15",
-    title: "岡崎BOPPERSライブ",
+    title: "BBB LIVE VOL.207 岡崎BOPPERS",
     venue: "BOPPERS",
     setlist: [
       { artist: "BOOWY", title: "B BLUE" },
@@ -576,7 +612,7 @@ const DB = [
       { artist: "山下達郎", title: "クリスマスイブ" },
       { artist: "氣志團", title: "One Night Carnival" },
     ],
-    bands: []
+    bands: ["ザ・スリーピース", "3M-SOUNDZ", "SOAK"]
   },
   {
     date: "2019-04-13",
@@ -600,23 +636,23 @@ const DB = [
   },
   {
     date: "2019-06-15",
-    title: "岡崎BOPPERSライブ",
+    title: "BBB LIVE VOL.228 岡崎BOPPERS (銀行強盗'S Presents)",
     venue: "BOPPERS",
     setlist: [
       { artist: "横浜銀蠅", title: "ぶっちぎりロックンロール～かっとびロックンロール" },
       { artist: "ZIGGY", title: "GLORIA" },
       { artist: "チェッカーズ", title: "ジュリアに傷心" },
       { artist: "ELLEGARDEN", title: "風の日" },
-      { artist: "バービーボーイズ", title: "目を閉じておいでよ" },
+      { artist: "BARBEE BOYS", title: "目を閉じておいでよ" },
       { artist: "男闘呼組", title: "Daybreak" },
       { artist: "氣志團", title: "One Night Carnival" },
       { artist: "小泉今日子", title: "学園天国" },
     ],
-    bands: []
+    bands: ["品鱈介", "シャークスクワッド", "銀行強盗'S"]
   },
   {
     date: "2019-09-14",
-    title: "岡崎BOPPERSライブ",
+    title: "BBB LIVE VOL.237 SLM48大感謝祭 岡崎BOPPERS",
     venue: "BOPPERS",
     setlist: [
       { artist: "AQUA TIMEZ", title: "虹" },
@@ -627,11 +663,11 @@ const DB = [
       { artist: "THE YELLOW MONKEY", title: "バラ色の日々" },
       { artist: "甲斐バンド", title: "HERO(ライブ版)" },
     ],
-    bands: []
+    bands: ["タッキーズ", "CRAB5", "PONS+", "ゆみともチェリーパイズ"]
   },
   {
     date: "2019-12-14",
-    title: "岡崎BOPPERSライブ",
+    title: "K's Night VOL.6 岡崎BOPPERS",
     venue: "BOPPERS",
     setlist: [
       { artist: "矢沢永吉", title: "黒く塗りつぶせ" },
@@ -641,11 +677,11 @@ const DB = [
       { artist: "THE BLUE HEARTS", title: "Train Train" },
       { artist: "サザンオールスターズ", title: "いとしのエリー" },
     ],
-    bands: []
+    bands: ["The Nostalgic Brothers", "レゾン", "the GIGS", "SOAK"]
   },
   {
     date: "2019-12-22",
-    title: "ハッスルナイト Vol.8 ＠栄Moon-Stone",
+    title: "ハッスルナイト Vol.8 ＠栄MOON-STONE",
     venue: "Moon-Stone",
     setlist: [
       { artist: "矢沢永吉", title: "黒く塗りつぶせ" },
@@ -655,7 +691,7 @@ const DB = [
       { artist: "ELLEGARDEN", title: "風の日" },
       { artist: "氣志團", title: "One Night Carnival" },
     ],
-    bands: []
+    bands: ["U'Min~chu~Nokaze", "Chuck Opener", "3cmダイナマイト", "ミラクルマラソン"]
   },
   {
     date: "2020-02-09",
@@ -672,7 +708,7 @@ const DB = [
   },
   {
     date: "2022-01-15",
-    title: "岡崎BOPPERSライブ (YouTube オンライン配信)",
+    title: "BBB LIVE VOL.328 岡崎BOPPERS",
     venue: "BOPPERS",
     setlist: [
       { artist: "SLM48", title: "俺たちSLM48" },
@@ -689,11 +725,11 @@ const DB = [
       { artist: "THE YELLOW MONKEY", title: "悲しきASIAN BOY" },
       { artist: "ELLEGARDEN", title: "風の日" },
     ],
-    bands: []
+    bands: ["鬼バンド"]
   },
   {
     date: "2022-09-03",
-    title: "岡崎BOPPERSライブ (銀行強盗'sさんお誘い)",
+    title: "BBB LIVE VOL.366 岡崎BOPPERS",
     venue: "BOPPERS",
     setlist: [
       { artist: "SLM48", title: "俺たちSLM48" },
@@ -706,11 +742,11 @@ const DB = [
       { artist: "東京スカパラダイスオーケストラ", title: "リボン feat.桜井和寿" },
       { artist: "布袋寅泰", title: "バンビーナ" },
     ],
-    bands: []
+    bands: ["HERMIT FANCY GARDEN", "銀行強盗'S"]
   },
   {
     date: "2022-12-17",
-    title: "岡崎BOPPERSライブ",
+    title: "BBB LIVE VOL.379 岡崎BOPPERS",
     venue: "BOPPERS",
     setlist: [
       { artist: "矢沢永吉", title: "黒く塗りつぶせ" },
@@ -720,13 +756,13 @@ const DB = [
       { artist: "REBECCA", title: "London Boy" },
       { artist: "桑田佳祐", title: "白い恋人達" },
       { artist: "THE YELLOW MONKEY", title: "悲しきASIAN BOY" },
-      { artist: "COMPLEX", title: "Be my baby" },
+      { artist: "COMPLEX", title: "BE MY BABY" },
     ],
-    bands: []
+    bands: ["Brashkit", "L&L"]
   },
   {
     date: "2023-02-18",
-    title: "SAQURA Zero to infinity ライブ (CRAB5さんお誘い)",
+    title: "Let's CREATE A FUTURE LIVE 2023 ＠豊橋SAQURA",
     venue: "SAQURA",
     setlist: [
       { artist: "THE YELLOW MONKEY", title: "悲しきASIAN BOY" },
@@ -738,11 +774,11 @@ const DB = [
       { artist: "東京スカパラダイスオーケストラ", title: "リボン feat.桜井和寿" },
       { artist: "COMPLEX", title: "BE MY BABY" },
     ],
-    bands: []
+    bands: ["CRAB5", "ELATE", "naive"]
   },
   {
     date: "2023-06-03",
-    title: "岡崎BOPPERSライブ (強盗'Sカーニバル)",
+    title: "強盗'Sカーニバル VOL.5 岡崎BOPPERS",
     venue: "BOPPERS",
     setlist: [
       { artist: "ELLEGARDEN", title: "風の日" },
@@ -754,11 +790,11 @@ const DB = [
       { artist: "FUNKY MONKEY BABYS", title: "あとひとつ" },
       { artist: "レキシ", title: "きらきら武士" },
     ],
-    bands: []
+    bands: ["したたるミルク", "銀行強盗'S"]
   },
   {
     date: "2023-06-24",
-    title: "岡崎BURNYライブ (CRAB5さんイベント)",
+    title: "Let's CREATE A FUTURE LIVE 2023 Vol.2 岡崎BURNY",
     venue: "BURNY",
     setlist: [
       { artist: "ELLEGARDEN", title: "風の日" },
@@ -770,7 +806,7 @@ const DB = [
       { artist: "FUNKY MONKEY BABYS", title: "あとひとつ" },
       { artist: "レキシ", title: "きらきら武士" },
     ],
-    bands: []
+    bands: ["naive", "finifugal", "CRAB5"]
   },
   {
     date: "2023-07-22",
@@ -790,7 +826,7 @@ const DB = [
   },
   {
     date: "2023-09-23",
-    title: "岡崎BOPPERSライブ",
+    title: "BBB LIVE VOL.410 岡崎BOPPERS",
     venue: "BOPPERS",
     setlist: [
       { artist: "横浜銀蠅", title: "ぶっちぎりロックンロール～かっとびロックンロール" },
@@ -800,11 +836,11 @@ const DB = [
       { artist: "ウルフルズ", title: "バンザイ～好きでよかった～" },
       { artist: "Vaundy", title: "怪獣の花唄" },
     ],
-    bands: []
+    bands: ["R・M-AKI", "T/T兄弟", "Mr.fifty"]
   },
   {
     date: "2023-09-30",
-    title: "岡崎BURNYライブ",
+    title: "Special Autumn Live 岡崎BURNY",
     venue: "BURNY",
     setlist: [
       { artist: "横浜銀蠅", title: "ぶっちぎりロックンロール～かっとびロックンロール" },
@@ -818,11 +854,11 @@ const DB = [
       { artist: "ウルフルズ", title: "バンザイ～好きでよかった～" },
       { artist: "Vaundy", title: "怪獣の花唄" },
     ],
-    bands: []
+    bands: ["SECRET MISSION", "The Figs"]
   },
   {
     date: "2023-11-18",
-    title: "SAQURA Zero to infinity ライブ (CRAB5さんお誘い)",
+    title: "Let's CREATE A FUTURE LIVE 2023 Vol.3 ＠豊橋SAQURA",
     venue: "SAQURA",
     setlist: [
       { artist: "横浜銀蠅", title: "ぶっちぎりロックンロール～かっとびロックンロール" },
@@ -835,11 +871,11 @@ const DB = [
       { artist: "ウルフルズ", title: "バンザイ～好きでよかった～" },
       { artist: "Vaundy", title: "怪獣の花唄" },
     ],
-    bands: []
+    bands: ["CRAB5", "finifugal", "Hi-STANDUP!!", "CRAZY SHUFFLE"]
   },
   {
     date: "2024-02-17",
-    title: "岡崎BURNYライブ",
+    title: "Burny J-POP Live 岡崎BURNY",
     venue: "BURNY",
     setlist: [
       { artist: "矢沢永吉", title: "黒く塗りつぶせ" },
@@ -853,11 +889,11 @@ const DB = [
       { artist: "Vaundy", title: "怪獣の花唄" },
       { artist: "米米クラブ", title: "SHAKE HIP" },
     ],
-    bands: []
+    bands: ["サンザンオールスターズ", "VELVET BEATS"]
   },
   {
     date: "2024-03-09",
-    title: "岡崎BOPPERS",
+    title: "BBB LIVE VOL.431 岡崎BOPPERS",
     venue: "BOPPERS",
     setlist: [
       { artist: "Eve", title: "お気に召すまま" },
@@ -867,11 +903,11 @@ const DB = [
       { artist: "Back Number", title: "高嶺の花子さん" },
       { artist: "米米クラブ", title: "SHAKE HIP" },
     ],
-    bands: []
+    bands: ["CRAB5", "ザ・ロックの時間", "Peace Walk"]
   },
   {
     date: "2024-04-06",
-    title: "SAQURA Zero to infinity ライブ",
+    title: "Let's CREATE A FUTURE LIVE 2024 Vol.4 ＠豊橋SAQURA",
     venue: "SAQURA",
     setlist: [
       { artist: "矢沢永吉", title: "黒く塗りつぶせ" },
@@ -884,7 +920,7 @@ const DB = [
       { artist: "Vaundy", title: "怪獣の花唄" },
       { artist: "米米クラブ", title: "SHAKE HIP" },
     ],
-    bands: []
+    bands: ["CRAB5", "AN:crown", "finifugal", "naive", "CRAZY SHUFFLE", "THE LOVE★JERRYS"]
   },
   {
     date: "2024-06-22",
@@ -901,11 +937,11 @@ const DB = [
       { artist: "サンボマスター", title: "輝きだして走ってく" },
       { artist: "サザンオールスターズ", title: "希望の轍" },
     ],
-    bands: []
+    bands: ["中西隆", "かに本家ななめ前", "日高屋"]
   },
   {
     date: "2024-07-06",
-    title: "岡崎BOPPERS",
+    title: "SLM48 presents 七夕の宴2024",
     venue: "BOPPERS",
     setlist: [
       { artist: "近藤真彦", title: "ミッドナイト・シャッフル" },
@@ -917,7 +953,7 @@ const DB = [
       { artist: "サンボマスター", title: "輝きだして走ってく" },
       { artist: "サザンオールスターズ", title: "希望の轍" },
     ],
-    bands: []
+    bands: ["SOAK", "ABB", "CRAB5"]
   },
   {
     date: "2024-08-24",
@@ -932,7 +968,7 @@ const DB = [
       { artist: "Vaundy", title: "怪獣の花唄" },
       { artist: "氣志團", title: "One Night Carnival" },
     ],
-    bands: []
+    bands: ["アップルタイザー", "おっしゃーバンド","Chuck Opener"]
   },
   {
     date: "2024-10-20",
@@ -946,7 +982,7 @@ const DB = [
       { artist: "Vaundy", title: "怪獣の花唄" },
       { artist: "THE YELLOW MONKEY", title: "悲しきASIAN BOY" },
     ],
-    bands: []
+    bands: ["CRAZY SHUFFLE", "PINZA", "サンザンオールスターズ"]
   },
   {
     date: "2024-12-28",
@@ -961,7 +997,7 @@ const DB = [
       { artist: "東京スカパラダイスオーケストラ", title: "カナリヤ鳴く空" },
       { artist: "レキシ", title: "きらきら武士" },
     ],
-    bands: []
+    bands: ["SUGAR CAT'S","SANTHERN☆T3","TOKU"]
   },
   {
     date: "2025-01-26",
@@ -975,7 +1011,7 @@ const DB = [
       { artist: "東京スカパラダイスオーケストラ", title: "カナリヤ鳴く空" },
       { artist: "スキマスイッチ", title: "全力少年" },
     ],
-    bands: ["ごいちとひろこ", "sfz", "Velvet Beats"]
+    bands: ["ごいちとひろこ", "sfz", "VELVET BEATS"]
   },
   {
     date: "2025-02-01",
@@ -989,7 +1025,7 @@ const DB = [
       { artist: "東京スカパラダイスオーケストラ", title: "カナリヤ鳴く空" },
       { artist: "スキマスイッチ", title: "全力少年" },
     ],
-    bands: []
+    bands: ["ELATE","SECRET MISSION"]
   },
   {
     date: "2025-02-09",
@@ -1072,7 +1108,7 @@ const DB = [
       { artist: "佐野元春", title: "Someday" },
       { artist: "SMAP", title: "SHAKE" },
     ],
-    bands: ["Fairytale", "milky", "MARCHALL PLAN"]
+    bands: ["Fairytale", "milky", "Marshall Plan"]
   },
   {
     date: "2025-08-23",
@@ -1086,7 +1122,7 @@ const DB = [
       { artist: "SMAP", title: "SHAKE" },
       { artist: "氣志團", title: "One Night Carnival" },
     ],
-    bands: []
+    bands: ["くらやみ自転車","Peace Walk","mini-suke"]
   },
   {
     date: "2025-09-28",
@@ -1099,32 +1135,7 @@ const DB = [
       { artist: "SMAP", title: "SHAKE" },
       { artist: "氣志團", title: "One Night Carnival" },
     ],
-    bands: ["TT&Tetsu", "チコ・らーの", "edamame", "Azu.K", "The Washi-LowS", "ナビアス", "Pearl Pierce", "いなぶ ナブア", "ヨレン・ストーンズ", "ROUT", "まるどり", "SOAK", "A-mission", "鬼バンド", "M's Refind", "たけうち製麺", "JOKERS☆", "芳泉会", "まことりお", "よつやおかだ", "sfz", "Inabu Dance Club", "ノンツー", "ABB", "frante drante", "97%", "R7-指定", "Roll Up+", "THE MOMENTS", "はねっちR学園", "HEAVEN", "CRAZY SHUFFLE", "サンザンオールスターズ☆"]
-  },
-  {
-    date: "2025-10-18",
-    title: "BOOWYだけ!! 岡崎BOPPERS",
-    venue: "BOPPERS",
-    setlist: [],
-    bands: ["IN-LINE4", "NOB-AND", "泡LANGUAGE", "sfz"]
-  },
-  {
-    date: "2025-11-30",
-    title: "岡崎BURNY (2025年5月30日記録分)",
-    venue: "BURNY",
-    setlist: [
-      { artist: "横浜銀蠅", title: "ぶっちぎりロックンロール" },
-      { artist: "東京スカパラダイスオーケストラ", title: "カナリヤ鳴く空" },
-      { artist: "ASIAN KUNG-FU GENERATION", title: "リライト" },
-      { artist: "マカロニえんぴつ", title: "ブルーベリー・ナイツ" },
-      { artist: "BOOWY", title: "Cloudy Heart" },
-      { artist: "JUDY AND MARY", title: "motto" },
-      { artist: "ユニコーン", title: "SUGAR BOY" },
-      { artist: "ELLEGARDEN", title: "風の日" },
-      { artist: "Vaundy", title: "怪獣の花唄" },
-      { artist: "氣志團", title: "One Night Carnival" },
-    ],
-    bands: ["SECRET MISSION", "Marshall Plan", "VELVET BEATS"]
+    bands: []
   },
   {
     date: "2026-01-25",
@@ -1175,7 +1186,7 @@ const DB = [
     title: "BOOWYだけ!! vol.2 岡崎BOPPERS",
     venue: "BOPPERS",
     setlist: [
-      { artist: "BOOWY", title: "GIGOLO & GIGOLET" },
+      { artist: "BOOWY", title: "GIGOLO＆GIGOLET" },
       { artist: "BOOWY", title: "NO NEWYORK" },
       { artist: "BOOWY", title: "Only You" },
       { artist: "BOOWY", title: "Cloudy Heart" },
@@ -1265,6 +1276,25 @@ function initFilters() {
   const af = document.getElementById('songArtistFilter');
   const artists = [...new Set(DB.flatMap(l => l.setlist.map(s => s.artist)))].sort();
   artists.forEach(a => { const o = document.createElement('option'); o.value = a; o.textContent = a; af.appendChild(o); });
+
+  // venue×setlist select
+  const vsf = document.getElementById('venueSongSelect');
+  allVenues.forEach(v => {
+    const liveCount = DB.filter(l => l.venue === v).length;
+    const o = document.createElement('option'); o.value = v; o.textContent = `${v}（${liveCount}回）`; vsf.appendChild(o);
+  });
+
+  // band×setlist select
+  const bsf = document.getElementById('bandSongSelect');
+  const allBands = [...new Set(DB.flatMap(l => l.bands))].sort((a,b) => {
+    const ca = DB.filter(l => l.bands.includes(a)).length;
+    const cb = DB.filter(l => l.bands.includes(b)).length;
+    return cb - ca;
+  });
+  allBands.forEach(b => {
+    const coCount = DB.filter(l => l.bands.includes(b)).length;
+    const o = document.createElement('option'); o.value = b; o.textContent = `${b}（${coCount}回共演）`; bsf.appendChild(o);
+  });
 }
 
 // Stats
@@ -1295,6 +1325,8 @@ function switchTab(name) {
   event.target.classList.add('active');
   if (name === 'songs') renderSongs();
   if (name === 'bands') renderBands();
+  if (name === 'venuesongs') renderVenueSongs();
+  if (name === 'bandsongs') renderBandSongs();
 }
 
 // Live card toggle
@@ -1348,7 +1380,7 @@ function renderLives() {
           <div class="live-info">
             <h3>${hl(live.title,q)}</h3>
             <div class="live-meta">
-              <span class="venue-tag">📍 ${hl(live.venue,q)}</span>
+              <span class="venue-tag" style="cursor:pointer" onclick="event.stopPropagation();jumpToVenueSongs('${live.venue.replace(/'/g,"\\'")}')">📍 ${hl(live.venue,q)}</span>
               ${live.setlist.length>0?`<span class="song-count-tag">🎵 ${live.setlist.length}曲</span>`:''}
               ${live.bands.length>0?`<span class="band-count-tag">🎤 共演 ${live.bands.length}バンド</span>`:''}
             </div>
@@ -1373,7 +1405,8 @@ function switchTabDirect(name) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
-  document.querySelectorAll('.tab-btn')[['lives','songs','bands','maintenance'].indexOf(name)].classList.add('active');
+  const idx = ['lives','songs','bands','venuesongs','bandsongs','maintenance'].indexOf(name);
+  document.querySelectorAll('.tab-btn')[idx].classList.add('active');
 }
 
 // Render songs
@@ -1436,10 +1469,17 @@ function renderBands() {
   if (!bands.length) { document.getElementById('bandList').innerHTML = '<div class="empty"><div class="emoji">🎤</div>該当するバンドがありません</div>'; return; }
 
   document.getElementById('bandList').innerHTML = bands.map(b => {
+    const safeB = b.name.replace(/'/g,"\\'").replace(/\\/g,'\\\\');
     return `
-      <div class="band-list-item" onclick="searchByBandInLives('${b.name.replace(/'/g,"\\'")}')">
-        <h4>${hl(b.name, q)} <span style="color:var(--text-dim);font-size:0.8rem;font-weight:400">（${b.dates.length}回共演）</span></h4>
-        <div class="band-live-dates">
+      <div class="band-list-item">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <h4>${hl(b.name, q)} <span style="color:var(--text-dim);font-size:0.8rem;font-weight:400">（${b.dates.length}回共演）</span></h4>
+          <div style="display:flex;gap:8px">
+            <button onclick="jumpToBandSongs('${safeB}')" style="background:var(--tag-bg);color:var(--tag-color);border:1px solid #3a2e10;border-radius:14px;padding:4px 12px;font-size:0.78rem;cursor:pointer">🎵 セトリを見る</button>
+            <button onclick="searchByBandInLives('${safeB}')" style="background:#1e1a28;color:#b090f0;border:1px solid #3a2e50;border-radius:14px;padding:4px 12px;font-size:0.78rem;cursor:pointer">🎸 ライブ一覧</button>
+          </div>
+        </div>
+        <div class="band-live-dates" style="margin-top:8px">
           ${b.dates.map(d=>{ const f=formatDate(d); return `<span class="date-pill">${f.year}.${f.md}</span>`; }).join('')}
         </div>
       </div>`;
@@ -1452,6 +1492,131 @@ function searchByBandInLives(name) {
   document.getElementById('venueFilter').value = '';
   document.getElementById('yearFilter').value = '';
   renderLives();
+}
+
+function jumpToBandSongs(name) {
+  switchTabDirect('bandsongs');
+  document.getElementById('bandSongSelect').value = name;
+  document.getElementById('bandSongSearch').value = '';
+  renderBandSongs();
+}
+
+function jumpToVenueSongs(name) {
+  switchTabDirect('venuesongs');
+  document.getElementById('venueSongSelect').value = name;
+  document.getElementById('venueSongSearch').value = '';
+  renderVenueSongs();
+}
+
+// ---- shared helper: build song frequency from a subset of lives ----
+function buildSongMapFromLives(lives) {
+  const map = {};
+  lives.forEach(live => {
+    live.setlist.forEach(s => {
+      const key = `${s.artist}|||${s.title}`;
+      if (!map[key]) map[key] = { artist: s.artist, title: s.title, dates: [], liveIds: [] };
+      if (!map[key].dates.includes(live.date)) {
+        map[key].dates.push(live.date);
+        map[key].liveIds.push(live.date);
+      }
+    });
+  });
+  return Object.values(map);
+}
+
+function renderAggSongList(songs, q, sort, countEl, listEl, onClickFn) {
+  let filtered = songs.filter(s => {
+    if (!q) return true;
+    return (s.artist + s.title).toLowerCase().includes(q.toLowerCase());
+  });
+  if (sort === 'count') filtered.sort((a,b) => b.dates.length - a.dates.length);
+  else if (sort === 'alpha') filtered.sort((a,b) => a.title.localeCompare(b.title, 'ja'));
+  else filtered.sort((a,b) => a.artist.localeCompare(b.artist, 'ja'));
+
+  countEl.innerHTML = `<span>${filtered.length}</span> 曲`;
+
+  if (!filtered.length) {
+    listEl.innerHTML = '<div class="empty"><div class="emoji">🎵</div>該当する曲がありません</div>';
+    return;
+  }
+  listEl.innerHTML = filtered.map((s, i) => {
+    const datePills = s.dates.map(d => {
+      const f = formatDate(d);
+      return `<span class="date-pill" style="cursor:pointer" onclick="event.stopPropagation();searchByDate('${d}')">${f.year}.${f.md}</span>`;
+    }).join('');
+    return `
+      <div class="song-list-item" onclick="${onClickFn}('${s.dates[0]}')">
+        <div class="song-num">${String(i+1).padStart(2,'0')}</div>
+        <div class="song-info">
+          <div class="artist">${hl(s.artist, q)}</div>
+          <div class="title">${hl(s.title, q)}</div>
+          <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">${datePills}</div>
+        </div>
+        <div class="song-dates">
+          <span class="count">${s.dates.length}</span>
+          回演奏
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ---- 会場×セトリ ----
+function renderVenueSongs() {
+  const venue  = document.getElementById('venueSongSelect').value;
+  const q      = document.getElementById('venueSongSearch').value.trim();
+  const sort   = document.getElementById('venueSongSort').value;
+  const countEl = document.getElementById('venueSongCount');
+  const listEl  = document.getElementById('venueSongList');
+
+  if (!venue) {
+    countEl.innerHTML = '';
+    listEl.innerHTML = '<div class="empty"><div class="emoji">📍</div>上のプルダウンから会場を選択してください</div>';
+    return;
+  }
+  const lives = DB.filter(l => l.venue === venue);
+  const totalLives = lives.length;
+  const songs = buildSongMapFromLives(lives);
+
+  // summary header
+  const summaryHtml = `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:14px 18px;margin-bottom:16px;display:flex;gap:24px;flex-wrap:wrap">
+      <div><span style="font-size:1.6rem;font-family:'Bebas Neue',sans-serif;color:var(--accent)">${totalLives}</span><span style="font-size:0.78rem;color:var(--text-dim);margin-left:6px">回のライブ</span></div>
+      <div><span style="font-size:1.6rem;font-family:'Bebas Neue',sans-serif;color:var(--accent2)">${songs.length}</span><span style="font-size:0.78rem;color:var(--text-dim);margin-left:6px">ユニーク曲</span></div>
+      <div><span style="font-size:1.6rem;font-family:'Bebas Neue',sans-serif;color:#80d080">${lives.reduce((s,l)=>s+l.setlist.length,0)}</span><span style="font-size:0.78rem;color:var(--text-dim);margin-left:6px">総演奏数</span></div>
+    </div>`;
+
+  countEl.innerHTML = summaryHtml + `<span style="color:var(--accent2);font-weight:700">${songs.length}</span> 曲（絞り込み前）`;
+  renderAggSongList(songs, q, sort, countEl, listEl, 'searchByDate');
+  listEl.insertAdjacentHTML('afterbegin', summaryHtml);
+}
+
+// ---- 共演バンド×セトリ ----
+function renderBandSongs() {
+  const band   = document.getElementById('bandSongSelect').value;
+  const q      = document.getElementById('bandSongSearch').value.trim();
+  const sort   = document.getElementById('bandSongSort').value;
+  const countEl = document.getElementById('bandSongCount');
+  const listEl  = document.getElementById('bandSongList');
+
+  if (!band) {
+    countEl.innerHTML = '';
+    listEl.innerHTML = '<div class="empty"><div class="emoji">🤝</div>上のプルダウンから共演バンドを選択してください</div>';
+    return;
+  }
+  const lives = DB.filter(l => l.bands.includes(band));
+  const songs = buildSongMapFromLives(lives);
+
+  const summaryHtml = `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:14px 18px;margin-bottom:16px;display:flex;gap:24px;flex-wrap:wrap">
+      <div><span style="font-size:1.6rem;font-family:'Bebas Neue',sans-serif;color:var(--accent)">${lives.length}</span><span style="font-size:0.78rem;color:var(--text-dim);margin-left:6px">回共演</span></div>
+      <div><span style="font-size:1.6rem;font-family:'Bebas Neue',sans-serif;color:var(--accent2)">${songs.length}</span><span style="font-size:0.78rem;color:var(--text-dim);margin-left:6px">ユニーク曲</span></div>
+      <div><span style="font-size:1.6rem;font-family:'Bebas Neue',sans-serif;color:#80d080">${lives.reduce((s,l)=>s+l.setlist.length,0)}</span><span style="font-size:0.78rem;color:var(--text-dim);margin-left:6px">総演奏数</span></div>
+      <div style="flex-basis:100%;font-size:0.78rem;color:var(--text-dim)">共演日：${lives.map(l=>{const f=formatDate(l.date);return `<span class="date-pill" style="cursor:pointer" onclick="searchByDate('${l.date}')">${f.year}.${f.md} ${l.venue}</span>`;}).join('')}</div>
+    </div>`;
+
+  countEl.innerHTML = '';
+  renderAggSongList(songs, q, sort, countEl, listEl, 'searchByDate');
+  listEl.insertAdjacentHTML('afterbegin', summaryHtml);
 }
 
 // Init
